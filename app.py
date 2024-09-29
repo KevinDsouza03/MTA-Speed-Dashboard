@@ -5,7 +5,7 @@ import seaborn as sns
 import plotly.express as px
 
 # Set the path to your CSV file here
-csv_path = "path/to/your/file.csv"
+csv_path = "MTA_Bridges___Tunnels_Hourly_Traffic_Rates__Beginning_2010.csv"
 
 # Load the data
 @st.cache_data
