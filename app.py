@@ -1,104 +1,91 @@
-import streamlit as st
 import pandas as pd
+import numpy as np
+import pydeck as pdk
+import streamlit as st
+import re
 import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.express as px
 
-# Set the path to your CSV file here
-csv_path = "MTA_Bridges___Tunnels_Hourly_Traffic_Rates__Beginning_2010.csv"
+# Load data
+df = pd.read_csv("MTA_Bus_Route_Segment_Speeds__Beginning_2023_20241015.csv", nrows=10000)
+sim33c = df[df['Route ID'] == "SIM33C"]
 
-# Load the data
-@st.cache_data
-def load_data(path):
-    return pd.read_csv(path)
+def parse_wkt_point(wkt_point):
+    coords = re.findall(r'-?\d+\.\d+', wkt_point)
+    return float(coords[1]), float(coords[0])  # lat, lon
 
-df = load_data(csv_path)
+# Parse coordinates
+sim33c['Initial lat'], sim33c['Initial lon'] = zip(*sim33c['Timepoint Stop Georeference'].apply(parse_wkt_point))
+sim33c['End lat'], sim33c['End lon'] = zip(*sim33c['Next Timepoint Stop Georeference'].apply(parse_wkt_point))
 
-# Title
-st.title("Enhanced Data Visualization App")
+# Create a new DataFrame for the line segments
+line_data = sim33c[['Initial lon', 'Initial lat', 'End lon', 'End lat']].to_dict('records')
 
-# Display the first few rows of the dataset
-st.subheader("Data Preview")
-st.write(df.head())
+# Streamlit app
+st.title('MTA Bus Route SIM33C Visualization')
 
-# Display basic statistics
-st.subheader("Basic Statistics")
-st.write(df.describe())
+# Create a map
+st.pydeck_chart(pdk.Deck(
+    map_style='mapbox://styles/mapbox/light-v9',
+    initial_view_state=pdk.ViewState(
+        latitude=sim33c['Initial lat'].mean(),
+        longitude=sim33c['Initial lon'].mean(),
+        zoom=11,
+        pitch=50,
+    ),
+    layers=[
+        pdk.Layer(
+            'ScatterplotLayer',
+            data=sim33c,
+            get_position='[Initial lon, Initial lat]',
+            get_color=[0, 255, 0, 160],  # Green for initial points
+            get_radius=50,
+            pickable=True,
+            auto_highlight=True,
+        ),
+        pdk.Layer(
+            'ScatterplotLayer',
+            data=sim33c,
+            get_position='[End lon, End lat]',
+            get_color=[255, 0, 0, 160],  # Red for end points
+            get_radius=50,
+            pickable=True,
+            auto_highlight=True,
+        ),
+        pdk.Layer(
+            'LineLayer',
+            data=line_data,
+            get_source_position='[Initial lon, Initial lat]',
+            get_target_position='[End lon, End lat]',
+            get_color=[0, 0, 255, 80],  # Blue for lines
+            get_width=2,
+            pickable=True,
+            auto_highlight=True,
+        ),
+    ],
+    tooltip={
+        'html': '<b>Initial Stop:</b> {Timepoint Stop Name}<br/>'
+                '<b>Next Stop:</b> {Next Timepoint Stop Name}<br/>'
+                '<b>Speed:</b> {Speed} mph',
+        'style': {
+            'backgroundColor': 'steelblue',
+            'color': 'white'
+        }
+    }
+))
 
-# Sidebar for chart selection
-chart_type = st.sidebar.selectbox(
-    "Select Chart Type",
-    ["Histogram", "Scatter Plot", "Line Plot", "Bar Chart", "Box Plot", "Violin Plot", "Pair Plot", "Correlation Heatmap", "3D Scatter Plot"]
-)
+# Display the data
+st.subheader('SIM33C Route Data')
+st.write(sim33c)
 
-# Function to get numeric columns
-def get_numeric_columns(df):
-    return df.select_dtypes(include=['float64', 'int64']).columns
+# Add some statistics
+st.subheader('Route Statistics')
+st.write(f"Average Speed: {sim33c['Average Road Speed'].mean():.2f} mph")
+st.write(f"Total Segments: {len(sim33c)}")
 
-# Function to get categorical columns
-def get_categorical_columns(df):
-    return df.select_dtypes(include=['object', 'category']).columns
-
-if chart_type == "Histogram":
-    st.subheader("Histogram")
-    column = st.selectbox("Select a column for histogram", get_numeric_columns(df))
-    fig = px.histogram(df, x=column)
-    st.plotly_chart(fig)
-
-elif chart_type == "Scatter Plot":
-    st.subheader("Scatter Plot")
-    x_column = st.selectbox("Select X-axis", get_numeric_columns(df))
-    y_column = st.selectbox("Select Y-axis", get_numeric_columns(df))
-    fig = px.scatter(df, x=x_column, y=y_column)
-    st.plotly_chart(fig)
-
-elif chart_type == "Line Plot":
-    st.subheader("Line Plot")
-    x_column = st.selectbox("Select X-axis", df.columns)
-    y_column = st.selectbox("Select Y-axis", get_numeric_columns(df))
-    fig = px.line(df, x=x_column, y=y_column)
-    st.plotly_chart(fig)
-
-elif chart_type == "Bar Chart":
-    st.subheader("Bar Chart")
-    x_column = st.selectbox("Select X-axis", get_categorical_columns(df))
-    y_column = st.selectbox("Select Y-axis", get_numeric_columns(df))
-    fig = px.bar(df, x=x_column, y=y_column)
-    st.plotly_chart(fig)
-
-elif chart_type == "Box Plot":
-    st.subheader("Box Plot")
-    x_column = st.selectbox("Select X-axis (categorical)", get_categorical_columns(df))
-    y_column = st.selectbox("Select Y-axis (numerical)", get_numeric_columns(df))
-    fig = px.box(df, x=x_column, y=y_column)
-    st.plotly_chart(fig)
-
-elif chart_type == "Violin Plot":
-    st.subheader("Violin Plot")
-    x_column = st.selectbox("Select X-axis (categorical)", get_categorical_columns(df))
-    y_column = st.selectbox("Select Y-axis (numerical)", get_numeric_columns(df))
-    fig = px.violin(df, x=x_column, y=y_column)
-    st.plotly_chart(fig)
-
-elif chart_type == "Pair Plot":
-    st.subheader("Pair Plot")
-    columns = st.multiselect("Select columns for pair plot", get_numeric_columns(df), default=get_numeric_columns(df)[:3])
-    if len(columns) < 2:
-        st.warning("Please select at least two columns for the pair plot.")
-    else:
-        fig = sns.pairplot(df[columns])
-        st.pyplot(fig)
-
-elif chart_type == "Correlation Heatmap":
-    st.subheader("Correlation Heatmap")
-    corr = df.select_dtypes(include=['float64', 'int64']).corr()
-    fig = px.imshow(corr, color_continuous_scale='RdBu_r', zmin=-1, zmax=1)
-    st.plotly_chart(fig)
-
-elif chart_type == "3D Scatter Plot":
-    st.subheader("3D Scatter Plot")
-    x_column = st.selectbox("Select X-axis", get_numeric_columns(df))
-    y_column = st.selectbox("Select Y-axis", get_numeric_columns(df))
-    z_column = st.selectbox("Select Z-axis", get_numeric_columns(df))
-    fig = px.scatter_3d(df, x=x_column, y=y_column, z=z_column)
-    st.plotly_chart(fig)
+# Optional: Add a histogram of speeds
+st.subheader('Speed Distribution')
+fig, ax = plt.subplots()
+sim33c['Average Road Speed'].hist(bins=20, ax=ax)
+ax.set_xlabel('Average Road Speed (mph)')
+ax.set_ylabel('Frequency')
+st.pyplot(fig)
