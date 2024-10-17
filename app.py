@@ -6,19 +6,14 @@ import re
 import matplotlib.pyplot as plt
 
 # Load data
-df = pd.read_csv("MTA_Bus_Route_Segment_Speeds__Beginning_2023_20241015.csv", nrows=10000)
+df = pd.read_csv("MTA_Bus_Route_Segment_Speeds__Beginning_2023_20241017.csv",nrows=10000)
 sim33c = df[df['Route ID'] == "SIM33C"]
 
-def parse_wkt_point(wkt_point):
-    coords = re.findall(r'-?\d+\.\d+', wkt_point)
-    return float(coords[1]), float(coords[0])  # lat, lon
-
-# Parse coordinates
-sim33c['Initial lat'], sim33c['Initial lon'] = zip(*sim33c['Timepoint Stop Georeference'].apply(parse_wkt_point))
-sim33c['End lat'], sim33c['End lon'] = zip(*sim33c['Next Timepoint Stop Georeference'].apply(parse_wkt_point))
-
+#Next Timepoint Stop Latitude	Next Timepoint Stop Longitude
+#Timepoint Stop Longitude Timepoint Stop Latitude
 # Create a new DataFrame for the line segments
-line_data = sim33c[['Initial lon', 'Initial lat', 'End lon', 'End lat']].to_dict('records')
+line_data = sim33c[['Timepoint Stop Longitude', 'Timepoint Stop Latitude', 'Next Timepoint Stop Longitude',
+                     'Next Timepoint Stop Latitude']].to_dict('records')
 
 # Streamlit app
 st.title('MTA Bus Route SIM33C Visualization')
@@ -27,8 +22,8 @@ st.title('MTA Bus Route SIM33C Visualization')
 st.pydeck_chart(pdk.Deck(
     map_style='mapbox://styles/mapbox/light-v9',
     initial_view_state=pdk.ViewState(
-        latitude=sim33c['Initial lat'].mean(),
-        longitude=sim33c['Initial lon'].mean(),
+        latitude=sim33c['Next Timepoint Stop Latitude'].mean(),
+        longitude=sim33c['Next Timepoint Stop Longitude'].mean(),
         zoom=11,
         pitch=50,
     ),
