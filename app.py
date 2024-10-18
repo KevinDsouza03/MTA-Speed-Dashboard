@@ -6,14 +6,22 @@ import re
 import matplotlib.pyplot as plt
 
 # Load data
-df = pd.read_csv("MTA_Bus_Route_Segment_Speeds__Beginning_2023_20241017.csv",nrows=10000)
+df = pd.read_csv("MTA_Bus_Route_Segment_Speeds__Beginning_2023_20241015.csv", nrows=10000)
 sim33c = df[df['Route ID'] == "SIM33C"]
 
-#Next Timepoint Stop Latitude	Next Timepoint Stop Longitude
-#Timepoint Stop Longitude Timepoint Stop Latitude
+# Function to extract coordinates from POINT string
+def extract_coordinates(point_str):
+    match = re.search(r'POINT \(([-\d.]+) ([-\d.]+)\)', point_str)
+    if match:
+        return float(match.group(1)), float(match.group(2))
+    return None, None
+
+# Extract coordinates
+sim33c['Start_Lon'], sim33c['Start_Lat'] = zip(*sim33c['Timepoint Stop Georeference'].apply(extract_coordinates))
+sim33c['End_Lon'], sim33c['End_Lat'] = zip(*sim33c['Next Timepoint Stop Georeference'].apply(extract_coordinates))
+
 # Create a new DataFrame for the line segments
-line_data = sim33c[['Timepoint Stop Longitude', 'Timepoint Stop Latitude', 'Next Timepoint Stop Longitude',
-                     'Next Timepoint Stop Latitude']].to_dict('records')
+line_data = sim33c[['Start_Lon', 'Start_Lat', 'End_Lon', 'End_Lat']].to_dict('records')
 
 # Streamlit app
 st.title('MTA Bus Route SIM33C Visualization')
@@ -22,8 +30,8 @@ st.title('MTA Bus Route SIM33C Visualization')
 st.pydeck_chart(pdk.Deck(
     map_style='mapbox://styles/mapbox/light-v9',
     initial_view_state=pdk.ViewState(
-        latitude=sim33c['Next Timepoint Stop Latitude'].mean(),
-        longitude=sim33c['Next Timepoint Stop Longitude'].mean(),
+        latitude=sim33c['Start_Lat'].mean(),
+        longitude=sim33c['Start_Lon'].mean(),
         zoom=11,
         pitch=50,
     ),
@@ -31,7 +39,7 @@ st.pydeck_chart(pdk.Deck(
         pdk.Layer(
             'ScatterplotLayer',
             data=sim33c,
-            get_position='[Initial lon, Initial lat]',
+            get_position=['Start_Lon', 'Start_Lat'],
             get_color=[0, 255, 0, 160],  # Green for initial points
             get_radius=50,
             pickable=True,
@@ -40,7 +48,7 @@ st.pydeck_chart(pdk.Deck(
         pdk.Layer(
             'ScatterplotLayer',
             data=sim33c,
-            get_position='[End lon, End lat]',
+            get_position=['End_Lon', 'End_Lat'],
             get_color=[255, 0, 0, 160],  # Red for end points
             get_radius=50,
             pickable=True,
@@ -49,8 +57,8 @@ st.pydeck_chart(pdk.Deck(
         pdk.Layer(
             'LineLayer',
             data=line_data,
-            get_source_position='[Initial lon, Initial lat]',
-            get_target_position='[End lon, End lat]',
+            get_source_position=['Start_Lon', 'Start_Lat'],
+            get_target_position=['End_Lon', 'End_Lat'],
             get_color=[0, 0, 255, 80],  # Blue for lines
             get_width=2,
             pickable=True,
