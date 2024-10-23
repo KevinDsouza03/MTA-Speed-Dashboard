@@ -1,3 +1,4 @@
 .python-version
 *.csv
 /env
+/google_transit_*
