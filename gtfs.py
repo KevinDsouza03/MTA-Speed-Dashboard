@@ -131,8 +131,7 @@ def main():
             "Queens": "./google_transit_queens",
             "Bronx": "./google_transit_bronx",
             "Manhattan": "./google_transit_manhattan",
-            "Trains": "google_transit",
-            "All":          
+            "Trains": "google_transit",     
             } #should make these into useable CSV's, just for my own usage. This is annoying
     GTFS_DIR = st.selectbox(
             "Select Borough",
@@ -207,6 +206,7 @@ def main():
         if 'agency' in viewer.data:
             st.subheader("Agency Details")
             st.dataframe(viewer.data['agency'])
+
 
 if __name__ == "__main__":
     main()
