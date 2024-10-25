@@ -5,9 +5,14 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from pathlib import Path
 
+"""
+TODO:
+    - Make this deployable by tomorrow. How to? lets see
+    - Frequency table stuff maybe
+    
 
+"""
 def create_frequency_graph(route_df):
-    #TODO
     df = pd.DataFrame(route_df)
 
     df['']
@@ -81,9 +86,10 @@ def load_data(nrows):
     return data
 #So ive displayed the average speed per hour of day according to route. Generalize to month, fastest months
 #now i would want to show frequency of buses, so how often are we actually getting a bus at a stop and how far off from the scheduled time. Maybe a table?
-#
+
 def main():
 # Load data
+    st.title('MTA Bus Route Visualization')
     df_len = 9495123
     nrows = st.slider(
         "Select number of rows to load", 
@@ -97,7 +103,6 @@ def main():
     # Create a new DataFrame for the line segments
 
     # Streamlit app
-    st.title('MTA Bus Route Visualization')
 
     #First, ill just make a table depending on user Bus Route Selection and display insights.
     
