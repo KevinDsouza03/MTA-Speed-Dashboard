@@ -5,13 +5,13 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-"""
-TODO:
-    - Make this deployable by tomorrow. How to? lets see
-    - Frequency table stuff maybe
-    
+# """
+# TODO:
+#     - Make this deployable by tomorrow. How to? lets see
+#     - Frequency table stuff maybe
 
-"""
+
+# """
 def create_frequency_graph(route_df):
     df = pd.DataFrame(route_df)
 
