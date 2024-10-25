@@ -3,6 +3,7 @@ import numpy as np
 import streamlit as st
 import seaborn as sns
 import matplotlib.pyplot as plt
+import urllib.request
 from pathlib import Path
 
 # """
@@ -75,21 +76,31 @@ def create_speed_time_scatter(route_df, switch):
 
 @st.cache_data
 def load_data(nrows):
-    filename_df = "Speeds.csv"
-    path_df = Path(filename_df)
+    
+    filename = 'Speeds.csv'
+    path = Path(filename)
+    if path.exists():
+        st.success(f"{filename} has been found from disk!")
+    else:
+        with st.spinner(f"Downloading {filename}..."):
+            urllib.request.urlretrieve(
+                r"https://data.ny.gov/api/views/58t6-89vi/rows.csv?fourfour=58t6-89vi&cacheBust=1728072129&date=20241024&accessType=DOWNLOAD&sorting=true",
+                filename,
+            )
+        st.success(f"{filename} has been downloaded!")
 
     data = pd.read_csv(
-        path_df,
-        nrows= nrows,#10000 currently but, i wanna vary this
+        path,
+        nrows = nrows,
     )
-
     return data
+
+
 #So ive displayed the average speed per hour of day according to route. Generalize to month, fastest months
 #now i would want to show frequency of buses, so how often are we actually getting a bus at a stop and how far off from the scheduled time. Maybe a table?
-
 def main():
-# Load data
-    st.title('MTA Bus Route Visualization')
+    st.title('MTA Bus Speed Dashboard')
+    # Load full data once
     df_len = 9495123
     nrows = st.slider(
         "Select number of rows to load", 
@@ -98,15 +109,10 @@ def main():
         value=10000,  # Default value
         step=50000
     )
-    df = load_data(nrows)
 
-    # Create a new DataFrame for the line segments
-
-    # Streamlit app
-
+    with st.spinner('Loading MTA Speeds data...'):
+        df = load_data(nrows)
     #First, ill just make a table depending on user Bus Route Selection and display insights.
-    
-
     route_selection = st.multiselect("Select Route(s)", options=df['Route ID'].unique(), default=[])
     route_df = df[df['Route ID'].isin(route_selection)]
 
