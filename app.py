@@ -5,6 +5,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import urllib.request
 from pathlib import Path
+import time
+
 
 # """
 # TODO:
@@ -13,6 +15,7 @@ from pathlib import Path
 
 
 # """
+
 def create_frequency_graph(route_df):
     df = pd.DataFrame(route_df)
 
@@ -74,21 +77,25 @@ def create_speed_time_scatter(route_df, switch):
     
     return fig, hourly_means
 
-@st.cache_data
-def load_data(nrows):
+@st.cache_data(show_spinner=False)
+def load_data(nrows): 
     
     filename = 'Speeds.csv'
     path = Path(filename)
+
+    message = st.empty()
     if path.exists():
-        st.success(f"{filename} has been found from disk!")
+        message.success(f"{filename} has been successfully found.")
     else:
         with st.spinner(f"Downloading {filename}..."):
             urllib.request.urlretrieve(
                 r"https://data.ny.gov/api/views/58t6-89vi/rows.csv?fourfour=58t6-89vi&cacheBust=1728072129&date=20241024&accessType=DOWNLOAD&sorting=true",
                 filename,
             )
-        st.success(f"{filename} has been downloaded!")
+        message.success(f"{filename} has been downloaded!")
 
+    time.sleep(3)
+    message.empty()
     data = pd.read_csv(
         path,
         nrows = nrows,
@@ -112,6 +119,7 @@ def main():
 
     with st.spinner('Loading MTA Speeds data...'):
         df = load_data(nrows)
+    
     #First, ill just make a table depending on user Bus Route Selection and display insights.
     route_selection = st.multiselect("Select Route(s)", options=df['Route ID'].unique(), default=[])
     route_df = df[df['Route ID'].isin(route_selection)]
