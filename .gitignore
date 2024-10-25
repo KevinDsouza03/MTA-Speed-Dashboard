@@ -2,3 +2,10 @@
 *.csv
 /env
 /google_transit_*
+/google_transit
+/combined
+/.devcontainer
+/__pycache__
+/gtfs_data
+/gtfs.py
+/*.zip
