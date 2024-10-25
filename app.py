@@ -14,26 +14,39 @@ def create_frequency_graph(route_df):
 
 
     return None
-def create_speed_time_scatter(route_df,switch):
-    # Calculate mean speed for each hour
-    grouping = None
-    if switch:
-        grouping = "Month"
-        hourly_means = route_df.groupby('Month')['Average Road Speed'].mean().reset_index()
-    else:
-        grouping = "Hour of Day"
-        hourly_means = route_df.groupby('Hour of Day')['Average Road Speed'].mean().reset_index()
+@st.cache_data
+def create_speed_time_scatter(route_df, switch):
+    if route_df.empty:
+        return None, None
+        
+    # Calculate mean speed for each hour and route
+    grouping = "Month" if switch else "Hour of Day"
+    hourly_means = route_df.groupby(['Route ID', grouping])['Average Road Speed'].mean().reset_index()
     
     # Create figure and axis objects with a single subplot
     fig, ax = plt.subplots(figsize=(12, 6))
     
-    # Create the scatter plot with mean values
-    ax.scatter(hourly_means[grouping], hourly_means['Average Road Speed'], 
-              s=100, alpha=0.7, color='#2E86C1', label='Hourly Mean')
-    
-    # Add connecting lines to show trend
-    ax.plot(hourly_means[grouping], hourly_means['Average Road Speed'], 
-           alpha=0.4, color='#2E86C1', linestyle='--')
+    for route_id in route_df['Route ID'].unique():
+        # Creating scatter plot
+        grouped = hourly_means[hourly_means['Route ID'] == route_id]
+        ax.scatter(grouped[grouping], grouped['Average Road Speed'], 
+                  s=100, alpha=0.7, label=f'Route {route_id}')
+        ax.plot(grouped[grouping], grouped['Average Road Speed'], 
+                alpha=0.4, linestyle='--')
+                
+        # Labels for each point. 
+        for idx, row in grouped.iterrows():
+            ax.annotate(f'{row["Average Road Speed"]:.1f}', 
+                       (row[grouping], row['Average Road Speed']),
+                       xytext=(0, 10),  
+                       textcoords='offset points',
+                       ha='center', 
+                       va='bottom',  
+                       fontsize=8,
+                       bbox=dict(boxstyle='round,pad=0.5', 
+                               fc='white', 
+                               ec='gray',
+                               alpha=0.7))
     
     ax.set_title(f'Average Road Speed by {grouping} ({grouping} Means)', fontsize=14, pad=15)
     ax.set_xlabel(grouping, fontsize=12)
@@ -41,24 +54,16 @@ def create_speed_time_scatter(route_df,switch):
     
     ax.grid(True, linestyle='--', alpha=0.7)
     
-    # Set x-axis ticks to show all hours
-    ax.set_xticks(range(0, 24))
-
-    #labels    
-    for x, y in zip(hourly_means[grouping], hourly_means['Average Road Speed']):
-        ax.annotate(f'{y:.1f}', 
-                   (x, y), 
-                   textcoords="offset points", 
-                   xytext=(0,10), 
-                   ha='center')
+    # Set x-axis ticks
+    if switch:
+        ax.set_xticks(range(int(route_df[grouping].min()), int(route_df[grouping].max())+1))
+    else:
+        ax.set_xticks(range(0, 24))
     
-    # Set y-axis to start from 0
-    ax.set_ylim(bottom=0)
+    # Set y-axis limits with extra padding to accommodate labels
+    ax.set_ylim(bottom=0, top=route_df['Average Road Speed'].max() * 1.2)  # Increased padding to 20%
     
-    # Add legend
     ax.legend()
-    
-    # Adjust layout to prevent label cutoff
     plt.tight_layout()
     
     return fig, hourly_means
@@ -95,21 +100,20 @@ def main():
     st.title('MTA Bus Route Visualization')
 
     #First, ill just make a table depending on user Bus Route Selection and display insights.
+    
 
-    route = st.selectbox(
-        "Select Route",
-        options = df['Route ID'].unique()   
-        )
+    route_selection = st.multiselect("Select Route(s)", options=df['Route ID'].unique(), default=[])
+    route_df = df[df['Route ID'].isin(route_selection)]
 
-    mask = df['Route ID'] == route
-    route_df = df[mask]
 
     #speed against timestmap
     #So can group by the hours of hte day, 1-24 then take the mean of that Average Road Speed w that. And then keep scalng that up to per month.
     switch = st.toggle("View by Month", value=False)
-
-    fig, hourly = create_speed_time_scatter(route_df,switch)
-    st.pyplot(fig)
-    st.table(hourly)
+    if route_selection:
+        fig, hourly = create_speed_time_scatter(route_df, switch)
+        st.pyplot(fig)
+        st.table(hourly)
+    else:
+        st.warning("Please select at least one route.")
 if __name__ == "__main__":
     main()
