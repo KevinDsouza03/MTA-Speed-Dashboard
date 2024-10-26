@@ -10,7 +10,7 @@ MTA Speed Dashboard provides an interactive interface to analyze and visualize:
 
 ## 🌐 Live Demo
 
-Try out the <a href="https://mta-speed-dashboard.streamlit.app/?embed=true">dashboard</a>:
+Try out the <a href="https://mta-speed-dashboard.streamlit.app/?embed=true" target="_blank">Dashboard</a>:
 
 
 ## 🎯 Features
