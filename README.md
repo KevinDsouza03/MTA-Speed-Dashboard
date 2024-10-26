@@ -1,4 +1,4 @@
-﻿# MTA Speed Dashboard
+# MTA Speed Dashboard
 
 A dynamic Streamlit application for visualizing MTA bus speeds and total number of trips per bus in New York City. Created for the MTAOpenData contest.
 
@@ -8,13 +8,15 @@ MTA Speed Dashboard provides an interactive interface to analyze and visualize:
 - Speed Analysis
 - Route Frequency Analysis
 
-
 ## 🌐 Live Demo
-Try out the dashboard: MTA Speed Dashboard
-    <iframe src="https://mta-speed-dashboard.streamlit.app/?embed=true" 
-    height = "450"
+
+Try out the dashboard:
+
+<iframe 
+    src="https://mta-speed-dashboard.streamlit.app/?embed=true" 
+    height="450"
     style="width:100%;border:none;">
-    </iframe>
+</iframe>
 
 ## 🎯 Features
 
@@ -64,7 +66,8 @@ streamlit run app.py
 4. Interact with the visualizations to explore speed and frequency patterns
 
 ## 📊 Data Sources
-    - https://data.ny.gov/Transportation/MTA-Bus-Route-Segment-Speeds-Beginning-2023/58t6-89vi/about_data
+
+- [MTA Bus Route Segment Speeds (Beginning 2023)](https://data.ny.gov/Transportation/MTA-Bus-Route-Segment-Speeds-Beginning-2023/58t6-89vi/about_data)
 
 ## 🏆 MTAOpenData Contest
 
