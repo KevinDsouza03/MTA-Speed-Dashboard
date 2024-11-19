@@ -59,6 +59,7 @@ streamlit run app.py
 2. Select a borough or specific route from the sidebar
 3. Choose your desired time period for analysis
 4. Interact with the visualizations to explore speed and frequency patterns
+5. Change in utils/data_loader.py line 13 if running locally to the length of the data. Streamlit tends to crash if its too much.
 
 ## 📊 Data Sources
 
