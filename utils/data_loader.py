@@ -10,7 +10,7 @@ def create_data_controls(): #Allows user to add/remove more rows from the df for
         nrows = st.slider(
             "Number of rows to analyze", 
             min_value=100, 
-            max_value=9495123, 
+            max_value=25000, #Change this for Local running so you can load more rows 
             value=st.session_state.get('nrows', 10000),
             step=50000
         )
